@@ -22,41 +22,47 @@ $debug = false;	// If debug need, change to true
 $last_ip_file = getcwd()."/dns_he_net.txt";
 $last_ip = "";
 
-
 // Read Last used IP
 if (file_exists($last_ip_file)){
 	$ip_add = file($last_ip_file);
-	$last_ip = trim($ip_add[0]);
-	
+	$last_ip = trim(end($ip_add));
+
 	// Debug
 	if ($debug) echo "Last IP was " . $last_ip . "\n";
 }
 
+
 // Get Current IP
-$output = array();
-if (exec('curl ifconfig.me', $output))
+if (exec('curl ifconfig.me > '.$last_ip_file.' 2>&1'))
 {
-	// Debug
-	if ($debug) echo "New IP is " . $output[0] . "\n";
-	
-	if ($output[0] != $last_ip || !file_exists($last_ip_file))
+	// Check file exist
+	if (!file_exists($last_ip_file))
 	{
-	        $result = array();
-	        exec('curl -4 "http://'.$domain_name.':'.$ddns_key.'@dyn.dns.he.net/nic/update?hostname='.$host_name.'"', $result);
+		if ($debug) echo "File not exist!\n";
 
-	        // Update dns_he_net.txt
-	        exec('echo '.$output[0].' > '.$last_ip_file);
+		exit();
+	}
 
-	        // Send email
-			if ($send_email) 
-			{
-				exec('echo "'.$output[0].'" | mail -s "'.$email_title.'" '.$email_to);
-				
-				// Debug
-				if ($debug) echo "Email sent\n";
-			}
-			
+	$ip_add_new = file($last_ip_file);
+
+	// Debug
+	if ($debug) echo "New IP is " . end($ip_add_new) . "\n";
+
+	if (end($ip_add_new) != $last_ip || !file_exists($last_ip_file))
+	{
+		$result = array();
+		exec('curl -4 "http://'.$domain_name.':'.$ddns_key.'@dyn.dns.he.net/nic/update?hostname='.$host_name.'"', $result);
+
+		// Send email
+		if ($send_email)
+		{
+			exec('echo "'.end($ip_add_new).'" | mail -s "'.$email_title.'" '.$email_to);
+
 			// Debug
-			if ($debug) print_r($result);
-	}	
+			if ($debug) echo "Email sent\n";
+		}
+			
+		// Debug
+		if ($debug) print_r($result);
+	}
 }
