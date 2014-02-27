@@ -45,7 +45,13 @@ $new_ip = trim(end($ip_add_new));
 // Debug
 if ($debug) echo "New IP is " . $new_ip . "\n";
 
-if ($new_ip != $last_ip || !file_exists($last_ip_file))
+// Check IP address
+if (!filter_var($new_ip, FILTER_VALIDATE_IP))
+{
+	// Save back old IP address
+	exec('echo '.$last_ip.' > '.$last_ip_file);
+}
+else if ($new_ip != $last_ip || !file_exists($last_ip_file))
 {
 	if ($debug) echo 'http://'.$domain_name.':'.$ddns_key.'@dyn.dns.he.net/nic/update?hostname='.$host_name.'\n';
 	
